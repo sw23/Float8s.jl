@@ -75,15 +75,24 @@ end
     end
 end
 
-# Currently not implemented
-# @testset "Conversion Float8_4 <-> Float32" begin
-#
-#     @testset for i in 0x00:0xff
-#         if ~isnan(Float8_4(i))
-#             @test i == reinterpret(UInt8,Float8_4(Float32(Float8_4(i))))
-#         end
-#     end
-# end
+@testset "Conversion Float8_4 <-> Float32" begin
+
+    @testset for i in 0x00:0xff
+        if ~isnan(Float8_4(i))
+            @test i == reinterpret(UInt8,Float8_4(Float32(Float8_4(i))))
+        end
+    end
+end
+
+@testset "Float8_4 very small and very large" begin
+    @test Float8_4(1f-40) == zero(Float8_4)                  # #22: was 0.0078125
+    @test Float8_4(-1f-40) == -zero(Float8_4)
+    @test Float8_4(2f0^-10) == zero(Float8_4)                # half the smallest subnormal: tie to zero
+    @test Float32(Float8_4(nextfloat(2f0^-10))) == 2f0^-9    # just above: smallest subnormal
+    @test isinf(Float8_4(reinterpret(Float32, 0x43d05b46)))  # 416.7..., was a NaN code
+    @test isinf(Float8_4(1f30))
+    @test isinf(Float8_4(-1f30)) && signbit(Float8_4(-1f30))
+end
 
 @testset "Negation" begin
 
