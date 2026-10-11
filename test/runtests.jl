@@ -114,6 +114,13 @@ end
     @test isinf(Float8_4(-1f30)) && signbit(Float8_4(-1f30))
 end
 
+@testset "NaN codes decode to NaN" begin                      # #23
+    @testset for i in 0x00:0xff
+        @test isnan(Float8(i)) == isnan(Float32(Float8(i)))
+        @test isnan(Float8_4(i)) == isnan(Float32(Float8_4(i)))
+    end
+end
+
 @testset "Negation" begin
 
     @testset for i in 0x00:0xff
