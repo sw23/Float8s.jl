@@ -84,6 +84,26 @@ end
     end
 end
 
+@testset "Round to nearest, ties to even" begin
+    @testset for T in (Float8, Float8_4)
+        # every tie between two finite neighbours goes to the even code
+        for i in 0x00:UInt8(floatmax(T))-0x01
+            mid = (Float32(T(i)) + Float32(T(i+0x01)))/2    # exact in Float32
+            even = iseven(i) ? i : i+0x01
+            @test reinterpret(UInt8,T(mid)) == even
+            @test reinterpret(UInt8,T(-mid)) == even | 0x80
+        end
+        # the tie between floatmax and the next power of two overflows (Inf is even)
+        fmax = Float32(floatmax(T))
+        @test isinf(T(fmax + (fmax - Float32(prevfloat(floatmax(T))))/2))
+    end
+
+    @test Float32(Float8(0.2734375f0)) == 0.28125f0         # tie, was rounded down
+    @test Float32(Float8(15.25f0)) == 15f0                   # tie below floatmax
+    @test isinf(Float8(15.75f0))                             # tie above floatmax
+    @test Float32(Float8(0.179685f0)) == 0.171875f0          # subnormal table typo
+end
+
 @testset "Float8_4 very small and very large" begin
     @test Float8_4(1f-40) == zero(Float8_4)                  # #22: was 0.0078125
     @test Float8_4(-1f-40) == -zero(Float8_4)
